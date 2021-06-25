@@ -5,10 +5,10 @@ use tokio::sync::broadcast;
 #[tokio::main]
 async fn main() {
     let listener = TcpListener::bind("localhost:8080").await.unwrap();
-    let (tx, mut rx) = broadcast::channel::<String>(10);
+    let (tx, mut rx) = broadcast::channel(10);
 
     loop {
-        let (mut socket, _addr) = listener.accept().await.unwrap();
+        let (mut socket, addr) = listener.accept().await.unwrap();
         let tx = tx.clone();
         let mut rx = tx.subscribe();
 
@@ -24,12 +24,14 @@ async fn main() {
                             break;
                         }
 
-                        tx.send(line.clone()).unwrap();
+                        tx.send((line.clone(), addr)).unwrap();
                         line.clear();
                     },
                     result = rx.recv() => {
-                        let message = result.unwrap();
-                        write.write_all(&message.as_bytes()).await.unwrap();
+                        let (message, other_addr) = result.unwrap();
+                        if addr != other_addr {
+                            write.write_all(&message.as_bytes()).await.unwrap();
+                        }
                     }
                 }
             }
