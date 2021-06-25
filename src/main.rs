@@ -5,7 +5,7 @@ use tokio::sync::broadcast;
 #[tokio::main]
 async fn main() {
     let listener = TcpListener::bind("localhost:8080").await.unwrap();
-    let (tx, mut rx) = broadcast::channel(10);
+    let (tx, _) = broadcast::channel(10);
 
     loop {
         let (mut socket, addr) = listener.accept().await.unwrap();
